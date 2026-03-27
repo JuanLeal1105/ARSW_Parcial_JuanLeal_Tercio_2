@@ -24,7 +24,7 @@ public class BlueprintsServices {
         persistence.saveBlueprint(bp);
     }
 
-    public Set<Blueprint> getAllBlueprints() {
+    public Set<Blueprint> getAllBlueprints() throws BlueprintNotFoundException {
         return persistence.getAllBlueprints();
     }
 

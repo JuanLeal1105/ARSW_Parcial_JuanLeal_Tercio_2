@@ -1,5 +1,6 @@
 package edu.eci.arsw.blueprints.controllers;
 
+import edu.eci.arsw.blueprints.controllers.dto.ResponseDTO;
 import edu.eci.arsw.blueprints.model.Blueprint;
 import edu.eci.arsw.blueprints.model.Point;
 import edu.eci.arsw.blueprints.persistence.BlueprintNotFoundException;
@@ -15,63 +16,72 @@ import java.util.Map;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/blueprints")
+@RequestMapping("/api/v1/blueprints")
 public class BlueprintsAPIController {
-
     private final BlueprintsServices services;
 
-    public BlueprintsAPIController(BlueprintsServices services) { this.services = services; }
+
+    public BlueprintsAPIController(BlueprintsServices services) {
+        this.services = services;
+    }
 
     // GET /blueprints
     @GetMapping
-    public ResponseEntity<Set<Blueprint>> getAll() {
-        return ResponseEntity.ok(services.getAllBlueprints());
+    public ResponseEntity<ResponseDTO<Set<Blueprint>>> getAll() {
+        try{
+            Set<Blueprint> list = services.getAllBlueprints();
+            return ResponseEntity.ok(ResponseDTO.success(list, "Datos traidos", 200, HttpStatus.OK));
+        }catch (BlueprintNotFoundException e){
+            return ResponseEntity.ok(ResponseDTO.error("Error al traer planos pa", 400, HttpStatus.NOT_FOUND));
+        }
+
     }
 
     // GET /blueprints/{author}
     @GetMapping("/{author}")
-    public ResponseEntity<?> byAuthor(@PathVariable String author) {
+    public ResponseEntity<ResponseDTO<Set<Blueprint>>> byAuthor(@PathVariable String author) {
         try {
-            return ResponseEntity.ok(services.getBlueprintsByAuthor(author));
+            Set<Blueprint> setsitos = services.getBlueprintsByAuthor(author);
+            return ResponseEntity.ok(ResponseDTO.success(setsitos, "Planos encontrados", 200, HttpStatus.OK));
         } catch (BlueprintNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.ok(ResponseDTO.error("Planos no encontrados pa", 404, HttpStatus.NOT_FOUND));
         }
     }
 
     // GET /blueprints/{author}/{bpname}
     @GetMapping("/{author}/{bpname}")
-    public ResponseEntity<?> byAuthorAndName(@PathVariable String author, @PathVariable String bpname) {
+    public ResponseEntity<ResponseDTO<Blueprint>> byAuthorAndName(@PathVariable String author, @PathVariable String bpname) {
         try {
-            return ResponseEntity.ok(services.getBlueprint(author, bpname));
+            Blueprint planito = services.getBlueprint(author, bpname);
+            return ResponseEntity.ok(ResponseDTO.success(planito, "Plano encontrado",200, HttpStatus.FOUND));
         } catch (BlueprintNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.ok(ResponseDTO.error("Plano no encontrado pa",404, HttpStatus.NOT_FOUND));
         }
     }
 
     // POST /blueprints
     @PostMapping
-    public ResponseEntity<?> add(@Valid @RequestBody NewBlueprintRequest req) {
+    public ResponseEntity<ResponseDTO<Blueprint>> add(@Valid @RequestBody NewBlueprintRequest req) {
         try {
             Blueprint bp = new Blueprint(req.author(), req.name(), req.points());
             services.addNewBlueprint(bp);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            return ResponseEntity.ok(ResponseDTO.success(bp, "Plano creado con éxito", 201, HttpStatus.CREATED));
         } catch (BlueprintPersistenceException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.ok(ResponseDTO.error("Plano no se pudo crear pa", 400, HttpStatus.BAD_REQUEST));
         }
     }
 
     // PUT /blueprints/{author}/{bpname}/points
     @PutMapping("/{author}/{bpname}/points")
-    public ResponseEntity<?> addPoint(@PathVariable String author, @PathVariable String bpname,
+    public ResponseEntity<ResponseDTO<Void>> addPoint(@PathVariable String author, @PathVariable String bpname,
                                       @RequestBody Point p) {
         try {
             services.addPoint(author, bpname, p.x(), p.y());
-            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+            return ResponseEntity.ok(ResponseDTO.success(null, "Punto añadido con éxito", 202, HttpStatus.ACCEPTED));
         } catch (BlueprintNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.ok(ResponseDTO.error("Punto no se puede añadir pa",400, HttpStatus.BAD_REQUEST));
         }
     }
-
     public record NewBlueprintRequest(
             @NotBlank String author,
             @NotBlank String name,

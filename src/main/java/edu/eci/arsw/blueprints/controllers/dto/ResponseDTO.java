@@ -1,22 +1,28 @@
 package edu.eci.arsw.blueprints.controllers.dto;
 
+import org.springframework.http.HttpStatus;
+
 public class ResponseDTO<T> {
+    private int code;
+    private HttpStatus httpStatus;
     private String status;
     private String message;
     private T data;
 
-    public ResponseDTO(String status, String message, T data) {
+    public ResponseDTO(String status, String message, T data, int code, HttpStatus httpStatus) {
         this.status = status;
         this.message = message;
         this.data = data;
+        this.code = code;
+        this.httpStatus = httpStatus;
     }
 
-    public static <T> ResponseDTO<T> success(T data, String message) {
-        return new ResponseDTO<>("Success", message, data);
+    public static <T> ResponseDTO<T> success(T data, String message, int code, HttpStatus httpStat) {
+        return new ResponseDTO<>("Success", message, data, code, httpStat);
     }
 
-    public static <T> ResponseDTO<T> error(String message) {
-        return new ResponseDTO<>("Error", message, null);
+    public static <T> ResponseDTO<T> error(String message, int code, HttpStatus httpStat) {
+        return new ResponseDTO<>("Error", message, null, code, httpStat);
     }
 
     public String getStatus() {
@@ -38,5 +44,19 @@ public class ResponseDTO<T> {
     }
     public void setData(T data) {
         this.data = data;
+    }
+
+    public int getCode() {
+        return code;
+    }
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
+    }
+    public void setHttpStatus(HttpStatus httpStatus) {
+        this.httpStatus = httpStatus;
     }
 }
